@@ -1,7 +1,9 @@
 import os
-from flask import Flask, session, abort
+from flask import Flask, render_template, request, g, abort
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from functools import wraps
+from auth_helpers import verify_with_supabase
 
 load_dotenv()
 
@@ -29,18 +31,37 @@ except Exception as e:
 
 app = Flask(__name__)
 
+
+def extract_access_token(token):
+    auth = request.header.get("Authorization", "")
+    if auth.lower().startswith("bearer "):
+        return auth.split(" ", 1)[1].strip()
+    token = request.cookies.get("sb-access-token")
+    if token:
+        return token
+
+    return None
+    
+     
 def login_required(function):
+    @wraps(function)
     def wrapper(*args, **kwargs):
-          if "google_id" not in session:
-               return abort(401)
-          else:
-               return function
+        token = extract_access_token()
+        if not token:
+            abort(401)
+        try:
+            user = verify_with_supabase(token)
+        except Exception:
+            abort(401)
+
+        g.user = {"id": user["id"], "email": user.get("email")}
+        return function(*args, **kwargs)
     return wrapper
-               
+
 
 @app.route("/")
 def index():
-  return "Hello, World!"
+  return render_template("index.html")
 
 @app.route("/login")
 def login():

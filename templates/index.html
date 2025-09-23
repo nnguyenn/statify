@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Statify · Arise</title>
+
+    <!-- Retro / pixel fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+    <style>
+      :root{
+        /* Solo‑Leveling midnight palette overlaid on your background */
+        --cyan:#39e0ff;        /* mana glow */
+        --violet:#8e6bff;      /* arcane */
+        --ember:#ff6a3a;       /* eyes/embers */
+        --text:#e8ecff;        /* UI text */
+        --panel:#0b0a12cc;     /* translucent panel */
+        --panel-2:#141326cc;   /* panel grad */
+        --edge:#000;
+        --scanline:rgba(0,0,0,.14);
+      }
+      *{box-sizing:border-box}
+      html,body{height:100%}
+      body{margin:0; color:var(--text); font-family:"VT323", monospace; letter-spacing:.4px; background:#05070f; overflow:hidden}
+
+      /* BACKDROP: use provided image + retro overlays */
+      .bg{position:fixed; inset:0; z-index:0; pointer-events:none;}
+      .bg img{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1.08);
+        min-width:100%; min-height:100%; image-rendering: pixelated; /* strong retro feel */
+        filter: contrast(110%) saturate(112%) brightness(.92);}
+
+      /* Vignette + color grading on top of image */
+      .vignette{position:fixed; inset:0; z-index:1; pointer-events:none; background:
+        radial-gradient(1200px 600px at 68% 12%, rgba(57,224,255,.12), rgba(0,0,0,0) 55%),
+        radial-gradient(900px 500px at 30% 78%, rgba(142,107,255,.10), rgba(0,0,0,0) 60%),
+        linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.55));}
+
+      /* Dither/CRT overlay */
+      .dither{position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.35; mix-blend-mode:multiply;
+        background:
+          repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 2px, rgba(0,0,0,.04) 2px 4px),
+          repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, var(--scanline) 3px, var(--scanline) 4px);
+      }
+
+      /* UI LAYOUT */
+      .frame{position:relative; z-index:3; max-width:1200px; margin:0 auto; height:100%; padding:32px; display:grid; grid-template-rows: auto 1fr auto}
+
+      /* HUD: minimal top nav (optional) */
+      .nav{display:flex; align-items:center; justify-content:space-between; gap:16px}
+      .brand{display:flex; align-items:center; gap:12px}
+      .brand .dot{width:12px; height:12px; border:2px solid var(--edge); border-radius:3px; background:linear-gradient(90deg,#ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%); image-rendering:pixelated}
+      .brand h1{font-family:"Press Start 2P"; font-size:18px; margin:0; text-shadow:0 0 6px rgba(57,224,255,.85)}
+
+      /* Hero panel: bottom-left card like your reference */
+      .hero{align-self:end; max-width:min(640px, 90vw); margin-bottom:42px}
+      .panel{background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:3px solid #2b2440; border-radius:14px; padding:24px 22px;
+        box-shadow:0 0 0 3px #000 inset, 0 0 22px rgba(57,224,255,.18), 0 18px 38px rgba(0,0,0,.6); image-rendering:pixelated}
+      .title{font-family:"Press Start 2P"; font-size:clamp(20px,4.4vw,44px); margin:0 0 10px; line-height:1.2; text-shadow:0 0 6px rgba(57,224,255,.85), 0 0 22px rgba(142,107,255,.6), 0 4px 0 #000}
+      .subtitle{font-size:clamp(16px,2.4vw,22px); margin:0 0 16px; opacity:.95}
+      .copy{font-size:18px; line-height:1.35; opacity:.96; margin:0 0 16px}
+
+      .cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px}
+      .btn{position:relative; display:inline-flex; align-items:center; gap:10px; padding:14px 18px; font-size:18px; color:#0b0a12; text-decoration:none;
+        background:linear-gradient(180deg,#40ebff,#2fd7ff); border:3px solid #000; border-radius:8px; image-rendering:pixelated; cursor:pointer; user-select:none;
+        box-shadow:0 0 12px rgba(57,224,255,.7), 0 10px 0 #000, 0 16px 26px rgba(0,0,0,.55); transition:transform .08s, box-shadow .12s, filter .12s}
+      .btn:hover{filter:contrast(115%) saturate(120%); box-shadow:0 0 18px rgba(57,224,255,.9), 0 10px 0 #000}
+      .btn:active{transform:translateY(3px); box-shadow:0 0 12px rgba(57,224,255,.7), 0 6px 0 #000}
+      .btn.secondary{ background:linear-gradient(180deg,#a08aff,#8e6bff) }
+      .g-icon{width:18px; height:18px; display:inline-block; background:
+          linear-gradient(90deg,#ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%);
+        border:2px solid #000; border-radius:4px; image-rendering:pixelated}
+
+      /* Quick bullet group under CTA */
+      .bullets{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:16px}
+      .chip{background:#141327aa; border:2px solid #262144; border-radius:8px; padding:10px 12px; font-size:16px; box-shadow:0 0 0 2px rgba(57,224,255,.08) inset}
+
+      /* Footer */
+      footer{align-self:end; text-align:center; margin:0 0 12px; opacity:.85; font-size:18px}
+
+      @media (max-width:720px){
+        .frame{padding:18px}
+        .hero{margin-bottom:24px}
+        .panel{padding:18px}
+        .btn{width:100%; justify-content:center}
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Background image with retro treatment -->
+    <div class="bg" aria-hidden="true">
+      <img src="{{ url_for('static', filename='statify_landing.png') }}" alt="shadow gate background" />
+    </div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="dither" aria-hidden="true"></div>
+
+    <div class="frame">
+      <header class="nav">
+        <div class="brand">
+          <span class="dot" aria-hidden="true"></span>
+          <h1>Statify</h1>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="panel">
+          <h2 class="title">Arise Your Routine</h2>
+          <p class="subtitle">Clear quests. Absorb power. Ascend.</p>
+          <p class="copy">Turn daily tasks into dungeon clears. Earn XP and train <b>STR</b>, <b>DEX</b>, <b>WIS</b>, <b>VIT</b>, <b>CHA</b>, and <b>END</b>. Keep streaks to rank up—break them and feel the respawn.</p>
+          <div class="cta-row">
+            <a class="btn" href="{{ url_for('login') if false else '/login' }}">
+              <span class="g-icon" aria-hidden="true"></span>
+              <span>Sign in with Google</span>
+            </a>
+            <a class="btn secondary" href="#demo">Preview demo</a>
+          </div>
+          <div class="bullets">
+            <div class="chip">Daily Raids · 1 clear/day</div>
+            <div class="chip">Streaks → Rank Ups</div>
+            <div class="chip">Supabase Auth · RLS</div>
+          </div>
+        </div>
+      </section>
+
+      <footer><small>Designed by Nguyen Nguyen</small></footer>
+    </div>
+  </body>
+</html>
