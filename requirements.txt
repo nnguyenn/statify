@@ -1,5 +1,11 @@
 flask
 python-dotenv
-psycopg2
+psycopg2-binary
 flask-sqlalchemy
 supabase
+supbase-functions
+postgrest
+httpx
+storage3
+realtime
+supabase-auth

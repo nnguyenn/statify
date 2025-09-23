@@ -14,7 +14,7 @@ try:
         # Example: Attempt to fetch data from a table to verify the connection
         # Replace 'your_table_name' with an actual table in your Supabase project
         # and 'id' with a suitable column for filtering if needed.
-        response = supabase.table('your_table_name').select('*').limit(1).execute()
+        response = supabase.table('players').select('*').limit(1).execute()
 
         if response.data:
             print("Successfully connected to Supabase and fetched data.")
