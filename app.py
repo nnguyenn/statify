@@ -64,6 +64,22 @@ def login_required(view):
         return view(*args, **kwargs)
     return wrapper
 
+def ensure_player_exists(user: dict, access_token: str) -> None:
+    """
+    Upsert a players row for this user using their JWT (RLS-friendly).
+    """
+    supabase.postgrest.auth(access_token)
+
+    res = supabase.table("players").select("id").eq("id", user["id"]).limit(1).execute()
+    if res.data:
+        return
+
+    payload = {
+        "id": user["id"],                        # MUST equal auth.users.id
+        "username": (user.get("email") or "").split("@")[0] or None,
+    }
+    supabase.table("players").insert(payload).execute()
+
 
 @app.route("/")
 def index():
@@ -132,16 +148,18 @@ def establish_session():
             headers={"Authorization": f"Bearer {access_token}", "apikey": SUPABASE_ANON_KEY},
             timeout=5.0,
         )
+        user = r.json()  # contains user.id, email, etc.
+        ensure_player_exists(user, access_token)
         if r.status_code != 200:
             abort(401, description="Invalid/expired token")
-        user = r.json()  # contains user.id, email, etc.
     except Exception:
+        app.logger.exception("ensure_player_exists failed: %s", e)
         abort(401, description="Auth verification failed")
 
     resp = make_response(redirect(url_for("home"))) 
     cookie_opts = dict(
         httponly=True,
-        secure=True,     
+        secure=False,     
         samesite="Lax",
         max_age=expires_in,
         path="/",
@@ -155,5 +173,13 @@ def establish_session():
 
 @app.route("/home")
 @login_required
-def protected_area():
+def home():
      return "Protected!"
+
+@app.get("/me")
+@login_required
+def me():
+    # should return your players row once it exists
+    supabase.postgrest.auth(request.cookies.get("sb-access-token"))
+    row = supabase.table("players").select("id, username, level, xp").eq("id", g.user["id"]).single().execute()
+    return row.data or {}
