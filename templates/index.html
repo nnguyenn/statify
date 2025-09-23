@@ -12,10 +12,8 @@
 
     <style>
       :root{
-        /* Solo‑Leveling midnight palette overlaid on your background */
         --cyan:#39e0ff;        /* mana glow */
         --violet:#8e6bff;      /* arcane */
-        --ember:#ff6a3a;       /* eyes/embers */
         --text:#e8ecff;        /* UI text */
         --panel:#0b0a12cc;     /* translucent panel */
         --panel-2:#141326cc;   /* panel grad */
@@ -26,17 +24,17 @@
       html,body{height:100%}
       body{margin:0; color:var(--text); font-family:"VT323", monospace; letter-spacing:.4px; background:#05070f; overflow:hidden}
 
-      /* BACKDROP: use provided image + retro overlays */
-      .bg{position:fixed; inset:0; z-index:0; pointer-events:none;}
-      .bg img{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1.08);
-        min-width:100%; min-height:100%; image-rendering: pixelated; /* strong retro feel */
+      /* BACKDROP: fixed image at top + retro overlays */
+      .bg{position:fixed; inset:0; z-index:0; pointer-events:none}
+      .bg img{position:absolute; left:50%; top:0; transform:translateX(-50%);
+        width:100vw; height:100vh; object-fit:cover; object-position:center top; image-rendering: pixelated;
         filter: contrast(110%) saturate(112%) brightness(.92);}
 
       /* Vignette + color grading on top of image */
       .vignette{position:fixed; inset:0; z-index:1; pointer-events:none; background:
         radial-gradient(1200px 600px at 68% 12%, rgba(57,224,255,.12), rgba(0,0,0,0) 55%),
         radial-gradient(900px 500px at 30% 78%, rgba(142,107,255,.10), rgba(0,0,0,0) 60%),
-        linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.55));}
+        linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.58));}
 
       /* Dither/CRT overlay */
       .dither{position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.35; mix-blend-mode:multiply;
@@ -45,17 +43,26 @@
           repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, var(--scanline) 3px, var(--scanline) 4px);
       }
 
-      /* UI LAYOUT */
-      .frame{position:relative; z-index:3; max-width:1200px; margin:0 auto; height:100%; padding:32px; display:grid; grid-template-rows: auto 1fr auto}
+      /* Background floating particles (bigger + randomized via CSS vars filled by JS) */
+      .particles{position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden}
+      .p{position:absolute; bottom:-12vh; left:0;
+        width:var(--s,8px); height:var(--s,8px); background:var(--col, var(--cyan)); border:1px solid #00131a; border-radius:2px; image-rendering:pixelated;
+        box-shadow:0 0 calc(var(--s,8px)*1.5) var(--col, var(--cyan)); opacity:.85;
+        transform:translateX(var(--x,0)) scale(var(--scale,1));
+        animation:rise var(--dur,12s) linear infinite; animation-delay:var(--delay, -5s)}
+      @keyframes rise{ from{ transform: translateX(var(--x,0)) translateY(0) scale(var(--scale,1)); opacity:.9 }
+                        to{ transform: translateX(var(--x,0)) translateY(-120vh) scale(var(--scale,1)); opacity:.2 } }
 
-      /* HUD: minimal top nav (optional) */
+      /* UI LAYOUT */
+      .frame{position:relative; z-index:3; max-width:1200px; margin:0 auto; height:100vh; padding:32px; display:grid; grid-template-rows: auto 1fr auto}
+
       .nav{display:flex; align-items:center; justify-content:space-between; gap:16px}
       .brand{display:flex; align-items:center; gap:12px}
       .brand .dot{width:12px; height:12px; border:2px solid var(--edge); border-radius:3px; background:linear-gradient(90deg,#ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%); image-rendering:pixelated}
       .brand h1{font-family:"Press Start 2P"; font-size:18px; margin:0; text-shadow:0 0 6px rgba(57,224,255,.85)}
 
-      /* Hero panel: bottom-left card like your reference */
-      .hero{align-self:end; max-width:min(640px, 90vw); margin-bottom:42px}
+      /* Hero panel: bottom-left card */
+      .hero{align-self:end; max-width:min(640px, 92vw); margin-bottom:48px}
       .panel{background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:3px solid #2b2440; border-radius:14px; padding:24px 22px;
         box-shadow:0 0 0 3px #000 inset, 0 0 22px rgba(57,224,255,.18), 0 18px 38px rgba(0,0,0,.6); image-rendering:pixelated}
       .title{font-family:"Press Start 2P"; font-size:clamp(20px,4.4vw,44px); margin:0 0 10px; line-height:1.2; text-shadow:0 0 6px rgba(57,224,255,.85), 0 0 22px rgba(142,107,255,.6), 0 4px 0 #000}
@@ -64,11 +71,12 @@
 
       .cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px}
       .btn{position:relative; display:inline-flex; align-items:center; gap:10px; padding:14px 18px; font-size:18px; color:#0b0a12; text-decoration:none;
+        --btn-col: var(--cyan);
         background:linear-gradient(180deg,#40ebff,#2fd7ff); border:3px solid #000; border-radius:8px; image-rendering:pixelated; cursor:pointer; user-select:none;
         box-shadow:0 0 12px rgba(57,224,255,.7), 0 10px 0 #000, 0 16px 26px rgba(0,0,0,.55); transition:transform .08s, box-shadow .12s, filter .12s}
-      .btn:hover{filter:contrast(115%) saturate(120%); box-shadow:0 0 18px rgba(57,224,255,.9), 0 10px 0 #000}
-      .btn:active{transform:translateY(3px); box-shadow:0 0 12px rgba(57,224,255,.7), 0 6px 0 #000}
-      .btn.secondary{ background:linear-gradient(180deg,#a08aff,#8e6bff) }
+      .btn.secondary{ --btn-col: var(--violet); background:linear-gradient(180deg,#a08aff,#8e6bff) }
+      .btn:hover{filter:contrast(115%) saturate(120%); box-shadow:0 0 18px color-mix(in oklab, var(--btn-col) 85%, black), 0 10px 0 #000}
+      .btn:active{transform:translateY(3px); box-shadow:0 0 12px color-mix(in oklab, var(--btn-col) 75%, black), 0 6px 0 #000}
       .g-icon{width:18px; height:18px; display:inline-block; background:
           linear-gradient(90deg,#ea4335 0 25%, #fbbc05 25% 50%, #34a853 50% 75%, #4285f4 75% 100%);
         border:2px solid #000; border-radius:4px; image-rendering:pixelated}
@@ -78,23 +86,21 @@
       .chip{background:#141327aa; border:2px solid #262144; border-radius:8px; padding:10px 12px; font-size:16px; box-shadow:0 0 0 2px rgba(57,224,255,.08) inset}
 
       /* Footer */
-      footer{align-self:end; text-align:center; margin:0 0 12px; opacity:.85; font-size:18px}
+      footer{position:fixed; left:0; right:0; bottom:8px; z-index:3; text-align:center; opacity:.85; font-size:18px}
 
-      @media (max-width:720px){
-        .frame{padding:18px}
-        .hero{margin-bottom:24px}
-        .panel{padding:18px}
-        .btn{width:100%; justify-content:center}
-      }
+      @media (max-width:720px){ .frame{padding:18px} .hero{margin-bottom:24px} .panel{padding:18px} .btn{width:100%; justify-content:center} }
     </style>
   </head>
   <body>
-    <!-- Background image with retro treatment -->
+    <!-- Background image fixed at the top with retro treatment -->
     <div class="bg" aria-hidden="true">
       <img src="{{ url_for('static', filename='statify_landing.png') }}" alt="shadow gate background" />
     </div>
     <div class="vignette" aria-hidden="true"></div>
     <div class="dither" aria-hidden="true"></div>
+
+    <!-- Ambient floating particles (created dynamically for randomness) -->
+    <div class="particles" aria-hidden="true" id="particles"></div>
 
     <div class="frame">
       <header class="nav">
@@ -123,8 +129,35 @@
           </div>
         </div>
       </section>
-
-      <footer><small>Designed by Nguyen Nguyen</small></footer>
     </div>
+
+    <footer><small>Created by Nguyen Nguyen</small></footer>
+
+    <script>
+      // Create randomized floating particles (size, speed, x, color)
+      (function(){
+        const root = document.documentElement;
+        const wrap = document.getElementById('particles');
+        const N = 42; // number of particles
+        const colors = ['var(--cyan)','var(--violet)'];
+        for(let i=0;i<N;i++){
+          const el = document.createElement('span');
+          el.className = 'p';
+          const size = Math.floor(6 + Math.random()*14); // 6-20px
+          const x = Math.floor(Math.random()*100); // 0-100vw
+          const dur = (10 + Math.random()*12).toFixed(1) + 's';
+          const delay = (-Math.random()*20).toFixed(1) + 's';
+          const scale = (0.9 + Math.random()*0.6).toFixed(2);
+          const col = colors[Math.random()<0.6?0:1];
+          el.style.setProperty('--s', size+'px');
+          el.style.setProperty('--x', x+'vw');
+          el.style.setProperty('--dur', dur);
+          el.style.setProperty('--delay', delay);
+          el.style.setProperty('--scale', scale);
+          el.style.setProperty('--col', col);
+          wrap.appendChild(el);
+        }
+      })();
+    </script>
   </body>
 </html>
