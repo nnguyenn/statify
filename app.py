@@ -27,12 +27,24 @@ except Exception as e:
         print(f"Error connecting to Supabase: {e}")
 
 
-
-
-
 app = Flask(__name__)
 
-#Base Page
-@app.get("/")
-def home():
+@app.route("/")
+def index():
   return "Hello, World!"
+
+@app.route("/login")
+def login():
+     pass
+
+@app.route("/logout")
+def logout():
+     pass
+
+@app.route("/callback")
+def callback():
+     pass
+
+@app.route("protected_area")
+def protected_area():
+     pass
