@@ -112,9 +112,9 @@
 
       <section class="hero">
         <div class="panel">
-          <h2 class="title">Arise Your Routine</h2>
+          <h2 class="title">Forge Your Stats</h2>
           <p class="subtitle">Clear quests. Absorb power. Ascend.</p>
-          <p class="copy">Turn daily tasks into dungeon clears. Earn XP and train <b>STR</b>, <b>DEX</b>, <b>WIS</b>, <b>VIT</b>, <b>CHA</b>, and <b>END</b>. Keep streaks to rank up—break them and feel the respawn.</p>
+          <p class="copy">Turn daily tasks into dungeon clears. Earn XP and train <b>STR</b>, <b>DEX</b>, <b>WIS</b>, <b>VIT</b>, <b>CHA</b>, and <b>END</b>. Keep the chain alive to level fast; drop it and decay.</p>
           <div class="cta-row">
             <a class="btn" href="{{ url_for('login') if false else '/login' }}">
               <span class="g-icon" aria-hidden="true"></span>
@@ -125,7 +125,7 @@
           <div class="bullets">
             <div class="chip">Daily Raids · 1 clear/day</div>
             <div class="chip">Streaks → Rank Ups</div>
-            <div class="chip">Supabase Auth · RLS</div>
+            <div class="chip">Clear Rewards · XP + Attribute Gains</div>
           </div>
         </div>
       </section>
@@ -143,7 +143,7 @@
         for(let i=0;i<N;i++){
           const el = document.createElement('span');
           el.className = 'p';
-          const size = Math.floor(6 + Math.random()*14); // 6-20px
+          const size = Math.floor(3 + Math.random()*8); // 6-20px
           const x = Math.floor(Math.random()*100); // 0-100vw
           const dur = (10 + Math.random()*12).toFixed(1) + 's';
           const delay = (-Math.random()*20).toFixed(1) + 's';
