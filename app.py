@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, session, abort
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -29,6 +29,15 @@ except Exception as e:
 
 app = Flask(__name__)
 
+def login_required(function):
+    def wrapper(*args, **kwargs):
+          if "google_id" not in session:
+               return abort(401)
+          else:
+               return function
+    return wrapper
+               
+
 @app.route("/")
 def index():
   return "Hello, World!"
@@ -45,6 +54,8 @@ def logout():
 def callback():
      pass
 
-@app.route("protected_area")
+
+@app.route("/protected_area")
+@login_required
 def protected_area():
-     pass
+     return "Protected!"
