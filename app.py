@@ -171,10 +171,66 @@ def establish_session():
     return resp
 
 
-@app.route("/home")
+@app.get("/home")
 @login_required
 def home():
-     return "Protected!"
+    # Act as the signed-in user so RLS applies
+    token = request.cookies.get("sb-access-token")
+    supabase.postgrest.auth(token)
+
+    user_id = g.user["id"]
+
+    # --- Player profile (keep it lean for now)
+    player = (
+        supabase.table("players")
+        .select("id, username, level, xp, unspent_points, strength, dexterity, wisdom, vitality, charisma, endurance")
+        .eq("id", user_id)
+        .single()
+        .execute()
+        .data
+        or {}
+    )
+
+    # --- Active tasks (no actions yet; just display)
+    tasks = (
+        supabase.table("tasks")
+        .select("id, title, description, reward_xp, recurrence, is_active")
+        .eq("owner_id", user_id)
+        .eq("is_active", True)
+        .order("created_at", desc=False)
+        .limit(10)
+        .execute()
+        .data
+        or []
+    )
+
+    # --- Recent completions (show last 5). If you set FK, this join works; if not, template handles missing titles.
+    try:
+        completions = (
+            supabase.table("tasks_completions")
+            .select("id, completed_at, task_id, task:tasks(id, title, reward_xp)")
+            .eq("player_id", user_id)
+            .order("completed_at", desc=True)
+            .limit(5)
+            .execute()
+            .data
+            or []
+        )
+    except Exception:
+        completions = []
+
+    # --- Simple level curve helper (adjust later)
+    def xp_to_next(level: int) -> int:
+        # starter curve: 100 + 25 * level^2
+        return 100 + 25 * (level or 0) ** 2
+
+    return render_template(
+        "home.html",
+        player=player,
+        tasks=tasks,
+        completions=completions,
+        xp_to_next=xp_to_next(player.get("level") or 0),
+    )
 
 @app.get("/me")
 @login_required
