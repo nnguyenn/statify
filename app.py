@@ -179,7 +179,7 @@ def home():
 @app.get("/me")
 @login_required
 def me():
-    # should return your players row once it exists
+    # should return players row once it exists
     supabase.postgrest.auth(request.cookies.get("sb-access-token"))
     row = supabase.table("players").select("id, username, level, xp").eq("id", g.user["id"]).single().execute()
     return row.data or {}
