@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Statify · {{ profile.username }}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+  <style>
+    :root{ --cyan:#39e0ff; --panel:#0b0a12cc; --panel-2:#141326cc; --text:#e8ecff; --scanline:rgba(0,0,0,.14) }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0; color:var(--text); font-family:"VT323", monospace; background:#05070f; overflow:hidden; letter-spacing:.4px}
+    .bg{position:fixed; inset:0; z-index:0; pointer-events:none}
+    .bg::before{content:""; position:absolute; inset:0; background:url("{{ url_for('static', filename='statify_home.png') }}") center/cover no-repeat; image-rendering:pixelated; filter:contrast(108%) saturate(110%) brightness(.92)}
+    .bg::after{content:""; position:absolute; inset:0; background: radial-gradient(1100px 520px at 62% 20%, rgba(57,224,255,.12), rgba(0,0,0,0) 55%), linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.55))}
+    .scan{position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.35; mix-blend-mode:multiply;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 2px, rgba(0,0,0,.04) 2px 4px),
+                  repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, var(--scanline) 3px, var(--scanline) 4px); }
+    .frame{position:relative; z-index:3; max-width:1100px; margin:0 auto; height:100vh; padding:24px; display:grid; grid-template-rows:auto 1fr}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:3px solid #2b2440; border-radius:12px; box-shadow:0 0 0 3px #000 inset}
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand img{width:26px; height:26px; image-rendering:pixelated}
+    .brand h1{font-family:"Press Start 2P"; font-size:16px; margin:0}
+    main{margin-top:18px; display:grid; grid-template-columns:1.1fr .9fr; gap:16px; height:calc(100vh - 96px)}
+    .panel{background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:3px solid #2b2440; border-radius:12px; padding:16px; overflow:auto}
+    h2,h3{font-family:"Press Start 2P"; margin:0 0 10px} h2{font-size:16px} h3{font-size:14px}
+    .display{background:#0f0e1c; border:2px solid #2b2440; border-radius:10px; padding:12px 14px; font-size:18px; margin-bottom:8px}
+    .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+    .stat{background:#141327a6; border:2px solid #262144; border-radius:10px; padding:10px}
+    .bar{height:8px; background:#0f0e1c; border:1px solid #262144; border-radius:6px; overflow:hidden; margin-top:6px}
+    .bar i{display:block; height:100%; background:#39e0ff; width:var(--w,0%)}
+    @media(max-width:960px){ main{grid-template-columns:1fr; height:auto} body{overflow:auto} }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div class="frame">
+    <header>
+      <div class="brand">
+        <img src="{{ url_for('static', filename='statify_logo.png') }}" alt="">
+        <h1>@{{ profile.username }}</h1>
+      </div>
+      <a href="/home" style="color:var(--text); text-decoration:none">← Hub</a>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>Profile</h2>
+        <div class="display">{{ profile.bio or "—" }}</div>
+
+        <h2>Stats</h2>
+        <div class="stats">
+          {% for label, val in [
+            ('STR', profile.strength or 0),
+            ('DEX', profile.dexterity or 0),
+            ('WIS', profile.wisdom or 0),
+            ('VIT', profile.vitality or 0),
+            ('CHA', profile.charisma or 0),
+            ('END', profile.endurance or 0),
+          ] %}
+          {% set v = (val or 0)|int %}
+          {% set c = v if v <= 100 else 100 %}
+          <div class="stat">
+            <div style="display:flex; justify-content:space-between">
+              <span>{{ label }}</span><b>{{ v }}</b>
+            </div>
+            <div class="bar" style="--w: {{ c }}%"><i></i></div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Level</h2>
+        <div class="display">LV {{ profile.level or 0 }} · XP {{ profile.xp or 0 }}</div>
+        <p style="opacity:.9">Public view · read-only</p>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

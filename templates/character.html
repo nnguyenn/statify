@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Statify · Character</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --cyan:#39e0ff; --violet:#8e6bff; --ember:#ff6a3a;
+      --panel:#0b0a12cc; --panel-2:#141326cc; --text:#e8ecff;
+      --edge:#000; --scanline:rgba(0,0,0,.14);
+    }
+    :root { --ui-font: "VT323", monospace; }
+
+    body { font-family: var(--ui-font); }
+
+    button, input, select, textarea {
+      font: inherit;                /* family + size + weight + line-height */
+      color: var(--text);
+      letter-spacing: .4px;
+      -webkit-appearance: none;     /* kill OS styling that can change fonts */
+      appearance: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* make sure your styled classes also inherit */
+    .btn, .input, .textarea { font-family: var(--ui-font); }
+    .input, .textarea { color: var(--text); }
+
+    /* nicer placeholder to match */
+    ::placeholder { color: rgba(232,236,255,.65); font-family: var(--ui-font); }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--text); font-family:"VT323", monospace; letter-spacing:.4px; background:#05070f; overflow:hidden}
+
+    /* Background */
+    .bg{position:fixed; inset:0; z-index:0; pointer-events:none}
+    .bg::before{
+      content:""; position:absolute; inset:0;
+      background:url("{{ url_for('static', filename='statify_home.png') }}") center/cover no-repeat;
+      image-rendering:pixelated; filter:contrast(108%) saturate(110%) brightness(1.9);
+    }
+    .bg::after{
+      content:""; position:absolute; inset:0;
+      background:
+        radial-gradient(1100px 520px at 62% 20%, rgba(57,224,255,.12), rgba(0,0,0,0) 55%),
+        linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.55));
+    }
+    .scan{position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.35; mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 2px, rgba(0,0,0,.04) 2px 4px),
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, var(--scanline) 3px, var(--scanline) 4px);
+    }
+
+    /* Particles (3–8px) */
+    .particles{position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden}
+    .p{
+      position:absolute; bottom:-12vh; left:0;
+      width:var(--s,4px); height:var(--s,4px); background:var(--col, var(--cyan));
+      border:1px solid #00131a; border-radius:2px; image-rendering:pixelated;
+      box-shadow:0 0 calc(var(--s,4px)*1.4) var(--col, var(--cyan));
+      opacity:.85; transform:translateX(var(--x,0)) scale(var(--scale,1));
+      animation:rise var(--dur,12s) linear infinite; animation-delay:var(--delay, -5s)
+    }
+    @keyframes rise{
+      from{ transform:translateX(var(--x,0)) translateY(0) scale(var(--scale,1)); opacity:.9 }
+      to  { transform:translateX(var(--x,0)) translateY(-120vh) scale(var(--scale,1)); opacity:.2 }
+    }
+
+    /* Frame / header */
+    .frame{position:relative; z-index:3; max-width:1200px; margin:0 auto; height:100vh; padding:24px; display:grid; grid-template-rows:auto 1fr}
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding:8px 12px; background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:3px solid #2b2440; border-radius:12px;
+      box-shadow:0 0 0 3px #000 inset, 0 0 16px rgba(57,224,255,.15);
+    }
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand img{width:26px; height:26px; object-fit:contain; image-rendering:pixelated; filter:drop-shadow(0 0 8px rgba(57,224,255,.6))}
+    .brand h1{font-family:"Press Start 2P"; font-size:16px; margin:0}
+    .navlinks a{color:var(--text); text-decoration:none; margin-left:14px; opacity:.9}
+
+    /* Grid layout */
+    main{margin-top:18px; display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; height:calc(100vh - 96px)}
+    .panel{
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:3px solid #2b2440; border-radius:12px; padding:16px;
+      box-shadow:0 0 0 3px #000 inset, 0 18px 38px rgba(0,0,0,.55);
+      overflow:auto;
+    }
+    h2,h3{font-family:"Press Start 2P"; margin:0 0 10px}
+    h2{font-size:16px} h3{font-size:14px}
+    .muted{opacity:.9}
+
+    /* Profile editor form */
+    .form-grid{display:grid; grid-template-columns:1fr; gap:10px; margin-top:6px; max-width:520px}
+    .input{
+      width:100%; font-size:18px; color:var(--text); background:#0f0e1c;
+      border:2px solid #2b2440; border-radius:10px; padding:10px 12px; outline:none;
+    }
+    .textarea{min-height:96px; resize:vertical}
+
+    /* Stats */
+    .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+    .stat{background:#141327a6; border:2px solid #262144; border-radius:10px; padding:10px}
+    .stat .bar{height:8px; background:#0f0e1c; border:1px solid #262144; border-radius:6px; overflow:hidden; margin-top:6px}
+    .stat .bar > i{display:block; height:100%; width:var(--bar,0%); background:#39e0ff}
+
+    /* Equipment */
+    .equip-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+    .slot{background:#141327a6; border:2px solid #262144; border-radius:10px; padding:10px}
+    .slot .name{font-size:18px}
+    .slot .meta{font-size:14px; opacity:.9}
+
+    .hidden{display:none}
+    .header-row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .display-box{
+      background:#0f0e1c; border:2px solid #2b2440; border-radius:10px;
+      padding:12px 14px; font-size:20px; margin-bottom:8px;
+    }
+    /* Unified pixel buttons (matches landing/home) */
+    .btn{
+      position:relative; display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 14px; font-size:16px; line-height:1; color:#0b0a12; text-decoration:none;
+      border:3px solid #000; border-radius:10px; image-rendering:pixelated; cursor:pointer; user-select:none;
+      background:linear-gradient(180deg,#40ebff,#2fd7ff);
+      box-shadow:0 0 12px rgba(57,224,255,.7), 0 6px 0 #000, 0 10px 18px rgba(0,0,0,.45);
+      transition:transform .08s, box-shadow .12s, filter .12s;
+    }
+    .btn:hover{filter:contrast(112%) saturate(110%); box-shadow:0 0 16px rgba(57,224,255,.9), 0 6px 0 #000}
+    .btn:active{transform:translateY(2px); box-shadow:0 0 12px rgba(57,224,255,.7), 0 4px 0 #000}
+    .btn.secondary{
+      background:linear-gradient(180deg,#cfd5e3,#a9b2c4);
+      box-shadow:0 0 10px rgba(0,0,0,.25), 0 6px 0 #000, 0 10px 18px rgba(0,0,0,.45);
+    }
+    .btn.sm{ padding:8px 12px; font-size:14px }
+
+    /* Layout helpers */
+    .header-row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:10px}
+    .display-box{
+      background:#0f0e1c; border:2px solid #2b2440; border-radius:10px;
+      padding:12px 14px; font-size:18px; margin-bottom:8px;
+    }
+
+
+    /* Titles & Inventory */
+    .titles, .inv{display:flex; flex-direction:column; gap:8px}
+    .title, .inv-row{
+      display:flex; justify-content:space-between; gap:10px;
+      background:#141327a6; border:2px solid #262144; border-radius:10px; padding:8px 10px
+    }
+    .badge{padding:2px 6px; border:2px solid #2b2440; border-radius:6px; font-size:12px}
+
+    /* Mobile */
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr; height:auto}
+      body{overflow:auto}
+    }
+  </style>
+</head>
+<body>
+  <div id="character-root" data-editing="{{ 1 if editing else 0 }}">
+  <div class="bg" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+  <div class="particles" aria-hidden="true" id="particles"></div>
+
+  <div class="frame">
+    <header>
+      <div class="brand">
+        <img src="{{ url_for('static', filename='statify_logo.png') }}" alt="">
+        <h1>Character</h1>
+      </div>
+      <div class="navlinks">
+        <a href="/home">← Hub</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT: Profile + Stats + Equipment -->
+      <section class="panel">
+        <div class="header-row">
+          <h2>Profile</h2>
+          <!-- Edit button (hidden when editing) -->
+          <a id="editBtn" class="btn sm" href="javascript:void(0)" {% if editing %}style="display:none"{% endif %}>Edit Profile</a>
+        </div>
+         <!-- Read-only view -->
+        <div id="profileView" class="{% if editing %}hidden{% endif %}">
+          <label class="muted">Username</label>
+          <div class="display-box">{{ player.username or '—' }}</div>
+
+          <label class="muted">Bio</label>
+          <div class="display-box" style="min-height:72px">{{ player.bio or '—' }}</div>
+        </div>
+
+        <!-- Edit form (hidden until editing) -->
+        <form id="profileForm" method="post" action="{{ url_for('update_character_profile') }}"
+              class="form-grid {% if not editing %}hidden{% endif %}">
+          <label>Username</label>
+          <input class="input" name="username" maxlength="24" value="{{ player.username or '' }}" placeholder="Enter username" />
+          <label>Bio</label>
+          <textarea class="input textarea" name="bio" maxlength="240" placeholder="Add a short bio...">{{ player.bio or '' }}</textarea>
+
+          <div style="display:flex; gap:10px; margin-top:2px">
+            <button class="btn" type="submit">Save</button>
+            <button class="btn secondary" type="button" id="cancelBtn">Cancel</button>
+          </div>
+        </form>
+
+        <h2 style="margin-top:16px">Level & Stats</h2>
+        <div class="muted" style="margin-bottom:8px">Level <b>{{ player.level or 0 }}</b> · Unspent points <b>{{ player.unspent_points or 0 }}</b></div>
+        <div class="stats">
+          {% for label, val in [
+            ('STR', player.strength or 0),
+            ('DEX', player.dexterity or 0),
+            ('WIS', player.wisdom or 0),
+            ('VIT', player.vitality or 0),
+            ('CHA', player.charisma or 0),
+            ('END', player.endurance or 0),
+          ] %}
+            {% set v = (val or 0)|int %}
+            {% set clamped = v if v <= 100 else 100 %}
+            <div class="stat">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <span>{{ label }}</span><b>{{ v }}</b>
+              </div>
+              <div class="bar" style="--bar: {{ clamped }}%"><i></i></div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <h2 style="margin-top:16px">Equipment</h2>
+        <div class="equip-grid">
+          <div class="slot">
+            <div class="name">{{ (weapon.name if weapon else 'No Weapon') }}</div>
+            <div class="meta">{{ (weapon.rarity|upper ~ ' · +' ~ weapon.power) if weapon else 'WEAPON' }}</div>
+          </div>
+          <div class="slot">
+            <div class="name">{{ (armor.name if armor else 'No Armor') }}</div>
+            <div class="meta">{{ (armor.rarity|upper ~ ' · +' ~ armor.power) if armor else 'ARMOR' }}</div>
+          </div>
+          <div class="slot">
+            <div class="name">{{ (charm.name if charm else 'No Charm') }}</div>
+            <div class="meta">{{ (charm.rarity|upper ~ ' · +' ~ charm.power) if charm else 'CHARM' }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Titles + Inventory + Wallet -->
+      <aside class="panel">
+        <h2>Titles</h2>
+        <div class="titles">
+          {% if titles %}
+            {% for t in titles %}
+              <div class="title">
+                <span>{{ t.title.name if t.title else 'Title' }}</span>
+                <span class="badge">{{ 'ACTIVE' if t.active else 'EARNED' }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="title"><span class="muted">No titles yet.</span><span></span></div>
+          {% endif %}
+        </div>
+
+        <h2 style="margin-top:16px">Inventory</h2>
+        <div class="inv">
+          {% if inventory %}
+            {% for r in inventory %}
+              <div class="inv-row">
+                <span>{{ r.item.name if r.item else 'Item' }} <span class="muted">· {{ (r.item.slot|upper) if r.item else '' }} · {{ (r.item.rarity|upper) if r.item else '' }}</span></span>
+                <b>x{{ r.qty }}</b>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="inv-row"><span class="muted">Inventory empty.</span><span></span></div>
+          {% endif %}
+        </div>
+
+        <h3 style="margin-top:16px">Gold</h3>
+        <div class="muted"><b>{{ gold }}</b> g</div>
+      </aside>
+    </main>
+  </div>
+</div>
+
+  <script>
+    // Particles: 3–8px, cyan/violet, drifting upward
+    (function(){
+      const wrap = document.getElementById('particles');
+      const N = 42;
+      const colors = ['var(--cyan)','var(--violet)'];
+      const MIN_SIZE = 3, MAX_SIZE = 8;
+      for(let i=0;i<N;i++){
+        const el = document.createElement('span');
+        el.className = 'p';
+        const size  = Math.floor(MIN_SIZE + Math.random() * (MAX_SIZE - MIN_SIZE + 1));
+        const x     = Math.floor(Math.random()*100);
+        const dur   = (10 + Math.random()*12).toFixed(1) + 's';
+        const delay = (-Math.random()*20).toFixed(1) + 's';
+        const scale = (0.9 + Math.random()*0.6).toFixed(2);
+        const col   = colors[Math.random()<0.6?0:1];
+        el.style.setProperty('--s', size+'px');
+        el.style.setProperty('--x', x+'vw');
+        el.style.setProperty('--dur', dur);
+        el.style.setProperty('--delay', delay);
+        el.style.setProperty('--scale', scale);
+        el.style.setProperty('--col', col);
+        wrap.appendChild(el);
+      }
+    })();
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const root   = document.getElementById('character-root');
+      const EDITING = root && root.dataset.editing === '1';
+  
+      const view   = document.getElementById('profileView');
+      const form   = document.getElementById('profileForm');
+      const edit   = document.getElementById('editBtn');
+      const cancel = document.getElementById('cancelBtn');
+  
+      function setEditing(on) {
+        if (!view || !form) return;
+        form.classList.toggle('hidden', !on);
+        view.classList.toggle('hidden',  on);
+        if (edit) edit.hidden = on;
+      }
+  
+      setEditing(!!EDITING);
+  
+      if (edit)   edit.addEventListener('click',   () => setEditing(true));
+      if (cancel) cancel.addEventListener('click', () => setEditing(false));
+    });
+  </script>
+  
+  
+  
+  
+</body>
+</html>
