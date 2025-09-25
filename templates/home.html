@@ -111,13 +111,7 @@
     .btn:active{transform:translateY(2px); box-shadow:0 0 12px rgba(57,224,255,.7), 0 4px 0 #000}
   
     /* Cards grid — shorter so CTAs are visible */
-    main{
-      margin-top:10px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:16px;
-      height:calc(100vh - 200px); /* header + search space */
-    }
+    main{ display:block; height:auto; } 
     .card{
       position:relative;
       background:linear-gradient(180deg,var(--panel),var(--panel-2));
@@ -136,20 +130,208 @@
     }
     .card .cta:hover{filter:contrast(112%) saturate(110%); box-shadow:0 0 16px rgba(57,224,255,.9), 0 8px 0 #000}
     .card .cta:active{transform:translateY(2px); box-shadow:0 0 12px rgba(57,224,255,.7), 0 6px 0 #000}
+    .card{
+      display:flex; flex-direction:column;
+      overflow:visible;                 /* don't clip hover scale */
+    }
+    .card > h2{ flex:0 0 auto; }
+
+    .card-body{
+      flex:1 1 auto;                    /* take remaining height */
+      min-height:0;                     /* allow flex child to shrink and scroll */
+      overflow:auto;                    /* <-- scroll when needed */
+      overscroll-behavior:contain;
+      padding-right: 4px;               /* breathing room from scrollbar */
+    }
+
+    /* Nice slim scrollbar (optional) */
+    .card-body::-webkit-scrollbar{ width:8px }
+    .card-body::-webkit-scrollbar-thumb{
+      background:#2b2440; border-radius:8px;
+      box-shadow:inset 0 0 0 1px rgba(57,224,255,.15);
+    }
+    .card-body::-webkit-scrollbar-track{ background:transparent }
   
     /* Boss HP bar */
     .hp{height:14px; background:#0f0e1c; border:2px solid #2b2440; border-radius:8px; overflow:hidden}
     .hp > i{display:block; height:100%; width:var(--hp,0%); background:linear-gradient(90deg, #ff6a3a, #8e6bff); box-shadow:0 0 12px rgba(255,106,58,.6)}
   
     /* Character stats mini */
-    .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .pill{background:#0e0d1e; border:2px solid #2b2440; border-radius:8px; padding:6px 8px; font-family:"Press Start 2P"; font-size:12px}
-    .statline{display:flex; justify-content:space-between; border:2px solid #262144; border-radius:8px; padding:6px 8px; background:#141327a6}
+    /* Big, readable stat rows */
+    .statgrid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    .statrow{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:10px 12px; border-radius:12px;
+      background:#17152b; border:2px solid #2b2440;
+      box-shadow:inset 0 0 0 1px rgba(142,107,255,.12);
+    }
+    .statrow .l{display:flex; align-items:center; gap:10px}
+    .stat-icon{
+      width:22px; height:22px; object-fit:contain; image-rendering:pixelated;
+      filter:drop-shadow(0 0 6px rgba(57,224,255,.35));
+    }
+    .statrow .tag{font-family:"Press Start 2P"; font-size:12px; letter-spacing:1px}
+    .statrow .val{
+      font-size:22px; line-height:1;
+      min-width:6ch;            /* space for up to 6 digits (e.g. 999999) */
+      text-align:right;
+      white-space:nowrap;
+    }
+    @media (max-width: 980px){
+      .statgrid{grid-template-columns:1fr} /* stack on mobile */
+    }
+    .statline .l{ display:flex; align-items:center; gap:8px }
+    .stat-icon{
+      width:20px; height:20px; object-fit:contain;
+      image-rendering:pixelated;
+      filter:drop-shadow(0 0 6px rgba(57,224,255,.35));
+    }
   
     /* Shop list */
     .items{display:flex; flex-direction:column; gap:8px}
     .item{display:flex; justify-content:space-between; gap:10px; border:2px solid #262144; border-radius:8px; padding:6px 8px; background:#141327a6}
   
+
+    /* --- LV header + big XP bar --- */
+    .lvwrap{margin-bottom:10px}
+    .lvrow{display:flex; align-items:center; gap:10px; margin-bottom:8px}
+    .lvpill{
+      background:#0e0d1e; border:2px solid #2b2440; border-radius:10px;
+      padding:6px 10px; font-family:"Press Start 2P"; font-size:14px; letter-spacing:1px
+    }
+    .xpbar{
+      position:relative; height:22px; border-radius:12px;
+      background:#0f0e1c; border:3px solid #2b2440; overflow:hidden;
+      box-shadow:0 0 18px rgba(57,224,255,.18) inset, 0 2px 12px rgba(0,0,0,.5) inset;
+    }
+    .xpbar .fill{
+      position:absolute; inset:0; width:var(--xp,0%);
+      background:linear-gradient(90deg,#39e0ff 0%, #8e6bff 60%, #8e6bff 100%);
+      box-shadow:0 0 16px rgba(57,224,255,.55);
+    }
+    .xpbar::after{ /* subtle tick marks */
+      content:""; position:absolute; inset:0;
+      background:repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,.05) 18px 19px);
+      pointer-events:none;
+    }
+    .xptext{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      font-family:"Press Start 2P"; font-size:12px; letter-spacing:1px; text-shadow:0 2px 0 #000;
+    }
+
+    /* --- Big stat rows (from last change) --- */
+    .statgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
+    .statrow{display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:10px 12px; border-radius:12px; background:#17152b; border:2px solid #2b2440; box-shadow:inset 0 0 0 1px rgba(142,107,255,.12)}
+    .statrow .l{display:flex; align-items:center; gap:10px}
+    .stat-icon{width:22px; height:22px; image-rendering:pixelated; filter:drop-shadow(0 0 6px rgba(57,224,255,.35))}
+    .statrow .tag{font-family:"Press Start 2P"; font-size:12px; letter-spacing:1px}
+    .statrow .val{font-size:22px; line-height:1; min-width:6ch; text-align:right; white-space:nowrap}
+    @media (max-width:980px){.statgrid{grid-template-columns:1fr}}
+
+    /* --- Gear block (3 vertical slots + player panel) --- */
+    .gear-block{margin-top:14px; display:grid; grid-template-columns:160px 1fr; gap:14px}
+    .gear-slots{display:grid; grid-template-rows:repeat(3, 100px); gap:12px}
+    .slot{
+      background:#15132a; border:2px solid #2b2440; border-radius:10px;
+      display:grid; place-items:center; position:relative; overflow:hidden;
+      box-shadow:inset 0 0 0 1px rgba(57,224,255,.10);
+    }
+    .slot .label{position:absolute; bottom:6px; left:8px; font-size:12px; opacity:.9}
+    .slot img{max-width:78%; max-height:78%; image-rendering:pixelated; filter:drop-shadow(0 0 10px rgba(57,224,255,.35))}
+    .avatar-pane{
+      background:rgba(10,10,22,.6); border:2px solid #2b2440; border-radius:12px; position:relative;
+      min-height:330px; display:grid; place-items:center;
+    }
+    .avatar-sil{
+      width:70%; height:70%; opacity:.25; border:2px dashed #2b2440; border-radius:10px;
+      display:grid; place-items:center; font-family:"Press Start 2P"; font-size:12px;
+    }
+
+    /* ---- Carousel layout: 3 cards visible, slide 1 card per click ---- */
+    .carousel{
+      position:relative;
+      height:calc(100vh - 170px);
+      overflow:hidden;                 /* hides the next card completely */
+      padding:0 10px;                  /* little breathing room for hover near edges */
+    }
+    .track{
+      --gap:18px;
+      display:flex;
+      gap:var(--gap);
+      height:100%;
+      transition:transform .35s ease;
+      will-change:transform;
+    }
+    .card{
+      flex: 0 0 calc((100% - (var(--gap) * 2) + 2px) / 3);
+      height: calc(100% - (var(--vg) * 2)); /* room for hover scale inside viewport */
+      padding:14px;
+      cursor:pointer;
+      transform:translateZ(0);
+    }
+    .card:hover{ transform:translateY(-3px) scale(1.015); z-index:9; transition:transform .12s }
+    .card:active{ transform:translateY(-1px) scale(1.01) }
+
+    /* arrows */
+    .navarrow{
+      position:absolute; top:50%; transform:translateY(-50%);
+      width:42px; height:42px; image-rendering:pixelated; cursor:pointer; opacity:.95;
+      filter:drop-shadow(0 0 8px rgba(57,224,255,.5));
+      transition:transform .12s, filter .12s; z-index:5;
+    }
+    .navarrow:hover{ transform:translateY(-50%) scale(1.08); filter:drop-shadow(0 0 14px rgba(57,224,255,.9)) }
+    .navleft{ left:0 }
+    .navright{ right:0 }
+
+    /* make Character internals fit comfortably */
+    .gear-block{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns:136px 1fr;   
+      gap:10px;
+      min-height:228px;                  
+    }
+    .gear-slots{
+      display:grid;
+      grid-template-rows:repeat(3, 76px); /* was 92–100px */
+      gap:9px;
+    }
+    .slot{
+      background:#15132a; border:2px solid #2b2440; border-radius:10px;
+      display:grid; place-items:center; position:relative; overflow:hidden;
+      box-shadow:inset 0 0 0 1px rgba(57,224,255,.10);
+    }
+    .slot img{max-width:72%; max-height:72%; image-rendering:pixelated; filter:drop-shadow(0 0 10px rgba(57,224,255,.35))}
+    .slot .label{position:absolute; bottom:6px; left:8px; font-size:12px; opacity:.9}
+
+    .avatar-pane{
+      background:rgba(10,10,22,.6); border:2px solid #2b2440; border-radius:12px;
+      min-height:220px;                 
+      display:grid; place-items:center; position:relative;
+    }
+    .avatar-sil{
+      width:66%; height:66%; opacity:.25; border:2px dashed #2b2440; border-radius:10px;
+      display:grid; place-items:center; font-family:"Press Start 2P"; font-size:12px;
+    }
+
+    /* Ensure stat numbers remain readable */
+    .statrow .val, .statrow .tag { color: var(--text); }
+    .xptext{ color:var(--text); }   
+
+    .viewport{
+      position:relative;
+      height:100%;
+      overflow:hidden;
+      /* the gutter: lets cards grow inside without showing a 4th card */
+      padding: 14px;      /* <- try 20–24 if you want more room */
+      margin:0 -20px;      /* pulls the viewport back so layout stays aligned */
+    }
+
     /* Mobile */
     @media (max-width: 980px){
       main{grid-template-columns:1fr; height:auto}
@@ -186,61 +368,140 @@
       </form>
     </div>
 
-    <main>
-      <!-- Daily Boss card -->
-      <section class="card">
-        <h2>Daily Boss</h2>
-        <div class="muted">
-          {{ boss_tmpl.name or "Unknown" }} <span style="opacity:.8">· Tier {{ boss_tmpl.tier or "I" }}</span><br/>
-          Today’s Damage: <b>{{ today_dmg }}</b>
-        </div>
-        <div class="hp" style="--hp: {{ hp_pct }}%;">
-          <i></i>
-        </div>
-        <div class="muted">HP: {{ boss.current_hp or 0 }} / {{ boss.max_hp or 0 }} ({{ hp_pct }}%)</div>
-        <div class="muted">Quests ready today: <b>{{ tasks_cnt }}</b></div>
-        <a class="cta" href="/boss">Enter Gate</a>
-      </section>
+    <main class="carousel">
 
-      <!-- Character card -->
-      <section class="card">
-        <h2>Character</h2>
-        <div class="grid-2">
-          <div>
-            <div class="pill">LV {{ player.level or 0 }}</div>
-            <div class="muted" style="margin-top:6px">Unspent: <b>{{ player.unspent_points or 0 }}</b></div>
-          </div>
-          <div>
-            <div class="statline"><span>STR</span><b>{{ player.strength or 0 }}</b></div>
-            <div class="statline"><span>DEX</span><b>{{ player.dexterity or 0 }}</b></div>
-            <div class="statline"><span>WIS</span><b>{{ player.wisdom or 0 }}</b></div>
-            <div class="statline"><span>VIT</span><b>{{ player.vitality or 0 }}</b></div>
-            <div class="statline"><span>CHA</span><b>{{ player.charisma or 0 }}</b></div>
-            <div class="statline"><span>END</span><b>{{ player.endurance or 0 }}</b></div>
-          </div>
-        </div>
-        <a class="cta" href="/character">Open Character</a>
-      </section>
+      <!-- arrows -->
+      <img class="navarrow navleft"
+          src="{{ url_for('static', filename='statify_left.png') }}" alt="prev">
 
-      <!-- Shop card -->
-      <section class="card">
-        <h2>Shop</h2>
-        <div class="muted">Gold: <b>{{ gold }}</b></div>
-        <div class="items" style="margin-top:6px">
-          {% if items %}
-            {% for it in items %}
-              <div class="item">
-                <span>{{ it.name }} <span class="muted">· {{ it.slot|upper }} · {{ it.rarity|upper }}</span></span>
-                <b>{{ it.price_gold }}g</b>
+      <img class="navarrow navright"
+          src="{{ url_for('static', filename='statify_right.png') }}" alt="next">
+
+      <div class="viewport">
+        <div class="track" id="track">
+      
+          <!-- Daily Boss card -->
+          <section class="card panelish" data-href="/boss">
+            <h2>Daily Boss</h2>
+            <div class="card-body">
+              <div class="muted">
+                {{ boss_tmpl.name or "Unknown" }} <span style="opacity:.8">· Tier {{ boss_tmpl.tier or "I" }}</span><br/>
+                Today’s Damage: <b>{{ today_dmg }}</b>
               </div>
-            {% endfor %}
-          {% else %}
-            <div class="item"><span class="muted">No items yet.</span><span></span></div>
-          {% endif %}
+              <div class="hp" style="--hp: {{ hp_pct }}%;">
+                <i></i>
+              </div>
+              <div class="muted">HP: {{ boss.current_hp or 0 }} / {{ boss.max_hp or 0 }} ({{ hp_pct }}%)</div>
+              <div class="muted">Quests ready today: <b>{{ tasks_cnt }}</b></div>
+            </div>
+          </section>
+      
+          <!-- Character card -->
+          <section class="card" data-href="/character">
+            <h2>Character</h2>
+      
+            <!-- LEVEL -->
+            <div class="card-body">
+              <div class="lvwrap">
+                <div class="lvrow">
+                  <div class="lvpill">LV&nbsp;{{ player.level or 1 }}</div>
+                  <div class="muted">Unspent:&nbsp;<b>{{ player.unspent_points or 0 }}</b></div>
+                </div>
+                <div class="xpbar" style="--xp: {{ xp_pct|default(0) }}%">
+                  <i class="fill"></i><div class="xptext">{{ xp_text|default('XP 0 / ?') }}</div>
+                </div>
+              </div>
+        
+              <!-- STATS -->
+              <div class="statgrid" style="margin-top:12px">
+                {% set stats = [
+                  ('STR','statify_str.png', player.strength or 0),
+                  ('DEX','statify_dex.png', player.dexterity or 0),
+                  ('WIS','statify_wis.png', player.wisdom or 0),
+                  ('VIT','statify_vit.png', player.vitality or 0),
+                  ('CHA','statify_cha.png', player.charisma or 0),
+                  ('END','statify_end.png', player.endurance or 0),
+                ] %}
+                {% for label, icon, value in stats %}
+                  <div class="statrow">
+                    <div class="l">
+                      <img class="stat-icon" src="{{ url_for('static', filename=icon) }}" alt="{{ label }} icon">
+                      <span class="tag">{{ label }}</span>
+                    </div>
+                    <div class="val">{{ value }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+        
+              <!-- GEAR PREVIEW -->
+              <div class="gear-block">
+                <div class="gear-slots">
+                  <div class="slot"><div class="label">WEAPON</div></div>
+                  <div class="slot"><div class="label">ARMOR</div></div>
+                  <div class="slot"><div class="label">CHARM</div></div>
+                </div>
+                <div class="avatar-pane"><div class="avatar-sil">PLAYER<br>SPRITE</div></div>
+              </div>
+            </div>
+          </section>
+      
+          <!-- Shop card -->
+          <section class="card" data-href="/shop">
+            <h2>Shop</h2>
+            <div class="card-body">
+              <div class="muted">Gold: <b>{{ gold }}</b></div>
+              <div class="items" style="margin-top:6px">
+                {% if items %}
+                  {% for it in items %}
+                    <div class="item">
+                      <span>{{ it.name }} <span class="muted">· {{ it.slot|upper }} · {{ it.rarity|upper }}</span></span>
+                      <b>{{ it.price_gold }}g</b>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="item"><span class="muted">No items yet.</span><span></span></div>
+                {% endif %}
+              </div>
+            </div>
+          </section>
+      
+          <!-- NEW: Clears card -->
+          <section class="card" data-href="/clears">
+            <h2>Clears</h2>
+            <div class="card-body">
+              <div class="items" style="margin-top:6px">
+                {% for c in recent_clears or [] %}
+                  <div class="item">
+                    <span>{{ c.title }} <span class="muted">· {{ c.completed_at.strftime('%Y-%m-%d') if c.completed_at else '' }}</span></span>
+                    <b>{{ c.reward_xp or 0 }} XP</b>
+                  </div>
+                {% else %}
+                  <div class="item"><span class="muted">No clears yet.</span><span></span></div>
+                {% endfor %}
+              </div>
+            </div>
+          </section>
+      
+          <!-- NEW: Journal card -->
+          <section class="card" data-href="/journal">
+            <h2>Journal</h2>
+            <div class="card-body">
+              <div class="items" style="margin-top:6px">
+                {% for j in recent_notes or [] %}
+                  <div class="item">
+                    <span>{{ j.title or 'Note' }} <span class="muted">· {{ j.created_at.strftime('%Y-%m-%d') if j.created_at else '' }}</span></span>
+                    <b>view</b>
+                  </div>
+                {% else %}
+                  <div class="item"><span class="muted">No notes yet.</span><span></span></div>
+                {% endfor %}
+              </div>
+            </div>
+          </section>
+      
         </div>
-        <a class="cta" href="/shop">Open Shop</a>
-      </section>
-    </main>
+    </div>
+    </main>    
   </div>
 
   <script>
@@ -270,5 +531,91 @@
       }
     })();
   </script>
+  <script>
+    (() => {
+      const track = document.getElementById('track');
+      const left  = document.querySelector('.navleft');
+      const right = document.querySelector('.navright');
+      const VISIBLE = 3;
+    
+      // 1) Clone edges to allow seamless wrap
+      let originals   = Array.from(track.children);
+      const headClones = originals.slice(0, VISIBLE).map(n => n.cloneNode(true));
+      const tailClones = originals.slice(-VISIBLE).map(n => n.cloneNode(true));
+
+      // prepend tail clones in the SAME order
+      {
+        const frag = document.createDocumentFragment();
+        tailClones.forEach(n => frag.appendChild(n));
+        track.insertBefore(frag, track.firstChild);
+      }
+
+      // append head clones
+      {
+        const frag = document.createDocumentFragment();
+        headClones.forEach(n => frag.appendChild(n));
+        track.appendChild(frag);
+      }
+
+      let cards = Array.from(track.children);
+      let index = VISIBLE;   // start at first real card
+
+    
+      function measureStep(){
+        const c = track.querySelector('.card');
+        const gap = parseFloat(getComputedStyle(track).gap || 18);
+        step = c.getBoundingClientRect().width + gap;
+      }
+    
+      const snap = (x) => {
+        const dpr = window.devicePixelRatio || 1;
+        return Math.round(x * dpr) / dpr;
+      };
+
+      function apply(animate = true){
+        track.style.transition = animate ? 'transform .35s ease' : 'none';
+        const raw = -index * step;
+        const x = snap(raw);
+        track.style.transform = `translate3d(${x}px,0,0)`;
+        if (!animate) { void track.offsetHeight; track.style.transition = 'transform .35s ease'; }
+      }
+    
+      function go(dir){
+        index += dir;
+        apply(true);
+      }
+    
+      track.addEventListener('transitionend', () => {
+        const total = cards.length;
+        const lastRealStart = total - VISIBLE - 1;   // last index that shows a real first card at far right
+        const realCount = originals.length;
+    
+        // If we've slid into the right-side clones...
+        if (index >= realCount + VISIBLE) {
+          index -= realCount; // jump back by realCount to the mirror position
+          apply(false);
+        }
+        // If we've slid into the left-side clones...
+        if (index < VISIBLE) {
+          index += realCount; // jump forward by realCount to mirror position
+          apply(false);
+        }
+      });
+    
+      left.addEventListener('click', () => go(-1));
+      right.addEventListener('click', () => go(+1));
+      window.addEventListener('resize', () => { measureStep(); apply(false); });
+    
+      measureStep();
+      apply(false);   // position at the first real card without animation
+    
+      // Click anywhere on a card to navigate
+      document.addEventListener('click', (e) => {
+        const card = e.target.closest('.card[data-href]');
+        if (card) window.location.href = card.getAttribute('data-href');
+      });
+    })();
+    </script>
+    
 </body>
 </html>

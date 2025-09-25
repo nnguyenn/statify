@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from functools import wraps
 from auth_helpers import verify_with_supabase
+from xp_helper import cumulative_xp_to_level, xp_needed_for_level, xp_progress
 import re
 
 load_dotenv()
@@ -328,17 +329,39 @@ def home():
     cur_hp = boss.get("current_hp") or 0
     hp_pct = max(0, min(100, int(round(cur_hp / max_hp * 100))))
 
+    level = (player.get("level") or 1)
+    xp_val = (player.get("xp") or 0)
+
+    # Set this to True if `players.xp` stores lifetime XP across all levels.
+    XP_IS_TOTAL = False
+
+    xp = xp_progress(level, xp_val, xp_is_total=XP_IS_TOTAL)
+    xp_pct  = xp["pct"]
+    xp_text = xp["text"]
+    recent_clears = supabase.table("tasks_completions")\
+      .select("completed_at, task:tasks(title, reward_xp)")\
+      .eq("player_id", uid).order("completed_at", desc=True).limit(5).execute().data
+    recent_clears = [
+        {"title": (row["task"] or {}).get("title"), "reward_xp": (row["task"] or {}).get("reward_xp"), "completed_at": row.get("completed_at")}
+        for row in (recent_clears or [])
+    ]
+
+    recent_notes = supabase.table("journals")\
+      .select("title, created_at").eq("owner_id", uid).order("created_at", desc=True).limit(5).execute().data
+
+
     return render_template(
         "home.html",
         player=player,
         boss=boss,
         boss_tmpl=boss_tmpl,
-        hp_pct=hp_pct,
         today_dmg=today_dmg,
         tasks_cnt=tasks_cnt,
-        items=items,
-        gold=gold,
-        today=date.today().isoformat(),
+        hp_pct=hp_pct,
+        items=items, gold=gold,
+        xp_pct=xp_pct, xp_text=xp_text,
+        recent_clears=recent_clears, 
+        recent_notes=recent_notes
     )
 
 
