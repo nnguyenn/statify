@@ -616,6 +616,44 @@
       });
     })();
     </script>
-    
+    <script>
+      const searchForm = document.querySelector('form.search');
+      if (searchForm) {
+        searchForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const q = searchForm.q.value.trim();
+          if (!q) return;
+          try {
+            const res = await fetch(`/api/username-exists?q=${encodeURIComponent(q)}`, { credentials: 'include' });
+            const data = await res.json();
+            if (data.exists && data.username) {
+              window.location.href = `/u/${encodeURIComponent(data.username)}`;
+            } else {
+              showAlert({ title: 'Player not found', message: `No player named “${q}”.` });
+            }
+          } catch {
+            showError('Could not search right now. Try again in a moment.');
+          }
+        });
+      }
+    </script>    
+    {% include "_alert.html" %}
+    {% if error %}
+    <script id="alert-json" type="application/json">
+      {{ {"title": "Heads up", "message": error}|tojson }}
+    </script>
+    <script>
+      (function () {
+        const el = document.getElementById('alert-json');
+        if (!el) return;
+        try {
+          const payload = JSON.parse(el.textContent);
+          showAlert(payload);
+        } finally {
+          el.remove();
+        }
+      })();
+    </script>
+    {% endif %}
 </body>
 </html>

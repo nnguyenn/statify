@@ -339,9 +339,23 @@
       if (cancel) cancel.addEventListener('click', () => setEditing(false));
     });
   </script>
-  
-  
-  
-  
+  {% include "_alert.html" %}
+  {% if error %}
+    <script id="alert-json" type="application/json">
+      {{ {"title": "Heads up", "message": error}|tojson }}
+    </script>
+    <script>
+      (function () {
+        const el = document.getElementById('alert-json');
+        if (!el) return;
+        try {
+          const payload = JSON.parse(el.textContent);
+          showAlert(payload);
+        } finally {
+          el.remove();
+        }
+      })();
+    </script>
+    {% endif %}
 </body>
 </html>

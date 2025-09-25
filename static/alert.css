@@ -1,0 +1,46 @@
+/* lock scroll when open */
+body.modal-open { overflow: hidden; }
+
+/* overlay */
+.alert-overlay{
+  position:fixed; inset:0; z-index:9999;
+  display:grid; place-items:center;
+  background:rgba(5,7,15,.64);
+  backdrop-filter: blur(2px);
+}
+
+/* panel */
+.alert-modal{
+  width:min(460px,92vw);
+  background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  border:3px solid #2b2440; border-radius:14px;
+  padding:18px; position:relative;
+  box-shadow:0 0 0 3px #000 inset, 0 28px 58px rgba(0,0,0,.65);
+  image-rendering:pixelated;
+}
+
+.alert-icon{
+  width:56px; height:56px; display:block; margin:-4px auto 6px;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 0 12px rgba(57,224,255,.75));
+}
+
+.alert-modal h3{
+  margin:2px 0 6px; text-align:center; font-family:"Press Start 2P";
+  font-size:16px; letter-spacing:1px;
+}
+
+.alert-modal p{
+  margin:0 0 12px; text-align:center; font-size:18px; opacity:.95;
+}
+
+.alert-actions{ display:flex; justify-content:center; gap:10px }
+
+/* corner close */
+.alert-x{
+  position:absolute; right:8px; top:6px;
+  background:transparent; border:none; color:var(--text);
+  font-size:22px; line-height:1; cursor:pointer;
+  filter:drop-shadow(0 0 6px rgba(57,224,255,.6));
+}
+.alert-x:hover{ transform:scale(1.06) }

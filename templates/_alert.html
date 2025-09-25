@@ -1,0 +1,91 @@
+<!-- Alert Modal (hidden by default) -->
+<div id="alert-root" class="alert-root" aria-hidden="true">
+  <div class="alert-backdrop" data-close></div>
+
+  <div class="alert-card" role="dialog" aria-modal="true"
+       aria-labelledby="alert-title" aria-describedby="alert-message" tabindex="-1">
+    <button class="alert-x" type="button" data-close aria-label="Close">×</button>
+
+    <img class="alert-icon" src="{{ url_for('static', filename='statify_alert.png') }}" alt="" />
+    <h3 id="alert-title" class="alert-title">Heads up</h3>
+    <p id="alert-message" class="alert-msg">Something happened.</p>
+
+    <button id="alert-ok" class="alert-btn">OK</button>
+  </div>
+</div>
+
+<style>
+  .alert-root{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:10000}
+  .alert-root.is-open{display:flex}
+  .alert-backdrop{position:absolute; inset:0; background:rgba(5,7,15,.65); backdrop-filter:blur(2px)}
+  .alert-card{
+    position:relative; width:min(520px,92vw); padding:24px 24px 18px;
+    border:3px solid #2b2440; border-radius:14px;
+    background:linear-gradient(180deg, #0b0a12cc, #141326cc);
+    box-shadow:0 0 0 3px #000 inset, 0 18px 38px rgba(0,0,0,.55);
+    color:var(--text); font-family:"VT323", monospace; letter-spacing:.4px;
+    transform:translateY(10px) scale(.98); opacity:0; transition:transform .15s ease, opacity .15s ease;
+  }
+  .alert-root.is-open .alert-card{transform:translateY(0) scale(1); opacity:1}
+  .alert-x{
+    position:absolute; top:6px; right:8px; border:0; background:transparent;
+    color:#aab; font-size:18px; cursor:pointer
+  }
+  .alert-icon{display:block; width:64px; height:64px; margin:0 auto 8px; image-rendering:pixelated}
+  .alert-title{font-family:"Press Start 2P"; font-size:18px; text-align:center; margin:0 0 6px}
+  .alert-msg{font-size:18px; text-align:center; margin:0 0 14px}
+  .alert-btn{
+    display:block; margin:0 auto; padding:10px 16px; border-radius:10px;
+    border:3px solid #000; image-rendering:pixelated; cursor:pointer;
+    background:linear-gradient(180deg,#40ebff,#2fd7ff); color:#0b0a12; font-size:18px;
+    box-shadow:0 0 12px rgba(57,224,255,.7), 0 6px 0 #000, 0 10px 18px rgba(0,0,0,.45);
+    transition:transform .08s, box-shadow .12s, filter .12s;
+  }
+  .alert-btn:hover{filter:contrast(112%) saturate(110%); box-shadow:0 0 16px rgba(57,224,255,.9), 0 6px 0 #000}
+  .alert-btn:active{transform:translateY(2px); box-shadow:0 0 12px rgba(57,224,255,.7), 0 4px 0 #000}
+</style>
+
+<script>
+(() => {
+  const root    = document.getElementById('alert-root');
+  const card    = root.querySelector('.alert-card');
+  const okBtn   = document.getElementById('alert-ok');
+  const titleEl = document.getElementById('alert-title');
+  const msgEl   = document.getElementById('alert-message');
+
+  function trap(e){ if (e.key === 'Escape') hideAlert(); }
+  function lockScroll(lock){ document.documentElement.style.overflow = lock ? 'hidden' : ''; }
+
+  function showAlert({ title='Heads up', message='Something happened.' } = {}) {
+    titleEl.textContent = title;
+    msgEl.textContent   = message;
+    root.classList.add('is-open');
+    root.setAttribute('aria-hidden','false');
+    lockScroll(true);
+    // focus the dialog for Esc, then OK
+    card.focus({preventScroll:true});
+    setTimeout(()=> okBtn.focus({preventScroll:true}), 30);
+    document.addEventListener('keydown', trap);
+  }
+
+  function hideAlert() {
+    root.classList.remove('is-open');
+    root.setAttribute('aria-hidden','true');
+    lockScroll(false);
+    document.removeEventListener('keydown', trap);
+  }
+
+  // close on background click or X/OK
+  root.addEventListener('click', (e) => {
+    if (e.target === root || e.target.classList.contains('alert-backdrop') || e.target.dataset.close !== undefined) {
+      hideAlert();
+    }
+  });
+  okBtn.addEventListener('click', hideAlert);
+
+  // expose globally
+  window.showAlert = showAlert;
+  window.hideAlert = hideAlert;
+})();
+</script>
+

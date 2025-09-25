@@ -1,14 +1,14 @@
 import os
-from datetime import date
 import httpx
 from typing import Optional
 from urllib.parse import urlencode
-from flask import Flask, render_template, request, g, abort, redirect, url_for, render_template_string, make_response, flash
+from flask import Flask, render_template, request, g, abort, redirect, url_for, render_template_string, make_response, jsonify
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from functools import wraps
 from auth_helpers import verify_with_supabase
-from xp_helper import cumulative_xp_to_level, xp_needed_for_level, xp_progress
+from xp_helper import xp_progress
+from postgrest.exceptions import APIError as PostgrestAPIError
 import re
 
 load_dotenv()
@@ -19,9 +19,6 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 try:
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-        # Example: Attempt to fetch data from a table to verify the connection
-        # Replace 'your_table_name' with an actual table in your Supabase project
-        # and 'id' with a suitable column for filtering if needed.
         response = supabase.table('players').select('*').limit(1).execute()
 
         if response.data:
@@ -373,71 +370,18 @@ def character():
     supabase.postgrest.auth(token)
     uid = g.user["id"]
 
-    # Player snapshot (add 'bio' column to your players table if you haven't: ALTER TABLE public.players ADD COLUMN bio text;)
-    player = (
-        supabase.table("players")
-        .select("id, username, bio, level, xp, unspent_points, strength, dexterity, wisdom, vitality, charisma, endurance")
-        .eq("id", uid).single().execute().data
-        or {}
-    )
+    ctx = load_character_context(uid, token)
 
-    # Wallet (gold)
-    gold_rows = (
-        supabase.table("wallet_tx")
-        .select("delta_gold")
-        .eq("player_id", uid)
-        .execute().data or []
-    )
-    gold = sum(r.get("delta_gold", 0) for r in gold_rows)
-
-    # Equipment: get IDs then look up item records
-    res = (
-    supabase.table("equipment")
-    .select("weapon_id, armor_id, charm_id")
-    .eq("player_id", uid)
-    .limit(1)
-    .execute()
-)
-    equip = res.data[0] if res.data else {}
-    item_ids = [i for i in [equip.get("weapon_id"), equip.get("armor_id"), equip.get("charm_id")] if i]
-    items_map = {}
-    if item_ids:
-        it = supabase.table("items").select("id, name, slot, power, rarity").in_("id", item_ids).execute().data or []
-        items_map = {row["id"]: row for row in it}
-
-    weapon = items_map.get(equip.get("weapon_id"))
-    armor  = items_map.get(equip.get("armor_id"))
-    charm  = items_map.get(equip.get("charm_id"))
-
-    # Titles (last 6, mark active)
-    titles = (
-        supabase.table("player_titles")
-        .select("id, active, earned_at, title_id, title:titles(name, description)")
-        .eq("player_id", uid)
-        .order("earned_at", desc=True)
-        .limit(6)
-        .execute().data or []
-    )
-
-    # Inventory (first 20)
-    inv_rows = (
-        supabase.table("inventory")
-        .select("item_id, qty, item:items(name, slot, rarity, power)")
-        .eq("player_id", uid)
-        .order("acquired_at", desc=True)
-        .limit(20)
-        .execute().data or []
-    )
+    error   = request.args.get("err")
     editing = request.args.get("edit") == "1"
+
     return render_template(
         "character.html",
-        player=player,
-        gold=gold,
-        weapon=weapon, armor=armor, charm=charm,
-        titles=titles,
-        inventory=inv_rows,
-        editing=editing,  
+        error=error,
+        editing=editing,
+        **ctx
     )
+
 
 def load_character_context(uid, token):
     supabase.postgrest.auth(token)
@@ -474,33 +418,51 @@ def load_character_context(uid, token):
 @app.post("/character/profile")
 @login_required
 def update_character_profile():
-    token = request.cookies.get("sb-access-token")
-    uid = g.user["id"]
-    supabase.postgrest.auth(token)
+    uid   = g.user["id"]
+    token = extract_access_token()
 
     username = (request.form.get("username") or "").strip()
     bio      = (request.form.get("bio") or "").strip()
 
-    # Basic validation
+    def bounce(msg: str):
+        # Send user back to /character, keep edit mode on, show modal via ?err=
+        return redirect(url_for("character", err=msg), code=303)
+
+    # 1) Basic validation
     if username and (len(username) < 3 or len(username) > 24 or not re.match(r"^[A-Za-z0-9_]+$", username)):
-        ctx = load_character_context(uid, token)
-        return render_template("character.html", editing=True, error="Username must be 3–24 chars using letters, numbers, or underscore.", **ctx)
+        return bounce("Username must be 3–24 chars using letters, numbers, or underscore.")
 
-    # Uniqueness check (server-side)
-    if username:
-        exists = (supabase.table("players").select("id")
-                  .eq("username", username).neq("id", uid).limit(1).execute().data)
+    # 2) Only check duplicates if the username changed
+    current = (
+        supabase.table("players")
+        .select("username").eq("id", uid).single().execute().data
+        or {}
+    )
+    if username and username != (current.get("username") or ""):
+        exists = (
+            supabase.table("players").select("id")
+            .eq("username", username).neq("id", uid)
+            .limit(1).execute().data
+        )
         if exists:
-            ctx = load_character_context(uid, token)
-            return render_template("character.html", editing=True, error="That username is already taken.", **ctx)
+            return bounce("That username is already taken.")
 
-    # Apply update
+    # 3) Update
     payload = {"bio": bio}
-    if username:
+    if username and username != (current.get("username") or ""):
         payload["username"] = username
-    supabase.table("players").update(payload).eq("id", uid).execute()
 
-    return redirect(url_for("character"))
+    try:
+        supabase.table("players").update(payload).eq("id", uid).execute()
+    except PostgrestAPIError as e:
+        # Unique violation -> friendly duplicate message
+        if getattr(e, "code", None) == "23505" or "duplicate key" in str(e).lower():
+            return bounce("That username is already taken.")
+        # Fallback
+        return bounce("We couldn't save your profile. Please try again.")
+
+    # 4) Success -> back to /character (not in edit mode)
+    return redirect(url_for("character"), code=303)
 
 @app.get("/u/<username>", endpoint="profile_by_username")
 @login_required
@@ -513,7 +475,6 @@ def profile_by_username(username):
     profile = row[0] if isinstance(row, list) else row
     return render_template("profile_public.html", profile=profile, me=g.user["id"])
 
-# Search handler (GET /u?q=name -> redirect to /u/name)
 @app.get("/u")
 @login_required
 def profile_search_redirect():
@@ -521,3 +482,13 @@ def profile_search_redirect():
     if not q:
         return redirect(url_for("home"))
     return redirect(url_for("profile_by_username", username=q))
+
+@app.get("/api/username-exists")
+@login_required
+def api_username_exists():
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"exists": False})
+    r = supabase.table("players").select("username").ilike("username", q).limit(1).execute()
+    exists = bool(r.data)
+    return jsonify({"exists": exists, "username": (r.data[0]["username"] if exists else None)})
