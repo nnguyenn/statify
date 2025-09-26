@@ -488,7 +488,25 @@ def profile_search_redirect():
 def api_username_exists():
     q = (request.args.get("q") or "").strip()
     if not q:
-        return jsonify({"exists": False})
-    r = supabase.table("players").select("username").ilike("username", q).limit(1).execute()
-    exists = bool(r.data)
-    return jsonify({"exists": exists, "username": (r.data[0]["username"] if exists else None)})
+        return jsonify({"exists": False, "username": None}), 400
+
+    # Authenticate the client (not strictly required if the RPC is SECURITY DEFINER,
+    # but harmless and keeps things consistent with your other routes).
+    token = request.cookies.get("sb-access-token")
+    supabase.postgrest.auth(token)
+
+    # Use the same RPC your /u/<username> route uses
+    try:
+        res = supabase.rpc("get_profile_by_username", {"p_username": q}).execute()
+        rows = res.data or []
+        if isinstance(rows, dict):
+            rows = [rows]
+    except Exception:
+        rows = []
+
+    if rows:
+        # Ensure we return the canonical username field the RPC provides
+        username = rows[0].get("username") or q
+        return jsonify({"exists": True, "username": username}), 200
+
+    return jsonify({"exists": False, "username": None}), 200

@@ -617,26 +617,41 @@
     })();
     </script>
     <script>
-      const searchForm = document.querySelector('form.search');
-      if (searchForm) {
-        searchForm.addEventListener('submit', async (e) => {
+      (() => {
+        const form  = document.querySelector('form.search');
+        if (!form) return;
+        const input = form.querySelector('input[name="q"]');
+    
+        form.addEventListener('submit', async (e) => {
           e.preventDefault();
-          const q = searchForm.q.value.trim();
+          const q = (input?.value || '').trim();
           if (!q) return;
+    
           try {
-            const res = await fetch(`/api/username-exists?q=${encodeURIComponent(q)}`, { credentials: 'include' });
-            const data = await res.json();
-            if (data.exists && data.username) {
-              window.location.href = `/u/${encodeURIComponent(data.username)}`;
+            const res = await fetch(`/api/username-exists?q=${encodeURIComponent(q)}`, {
+              credentials: 'same-origin',
+              headers: { 'Accept': 'application/json', 'X-Requested-With': 'fetch' }
+            });
+    
+            if (!res.ok) {
+              showAlert({ title: 'Oops', message: 'Couldn’t check that name. Try again.' });
+              return;
+            }
+    
+            const { exists, username } = await res.json();
+    
+            if (exists && username) {
+              // route to the canonical username returned by the server
+              window.location.assign(`/u/${encodeURIComponent(username)}`);
             } else {
               showAlert({ title: 'Player not found', message: `No player named “${q}”.` });
             }
-          } catch {
-            showError('Could not search right now. Try again in a moment.');
+          } catch (err) {
+            showAlert({ title: 'Network error', message: 'Please try again in a moment.' });
           }
         });
-      }
-    </script>    
+      })();
+    </script>      
     {% include "_alert.html" %}
     {% if error %}
     <script id="alert-json" type="application/json">
