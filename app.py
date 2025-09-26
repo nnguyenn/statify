@@ -375,12 +375,29 @@ def character():
     error   = request.args.get("err")
     editing = request.args.get("edit") == "1"
 
+    player = (
+        supabase.table("players")
+        .select("id, username, bio, level, xp, unspent_points, strength, dexterity, wisdom, vitality, charisma, endurance")
+        .eq("id", uid).single().execute().data or {}
+    )
+
+    level = int(player.get("level") or 1)
+    total_xp = int(player.get("xp") or 0)
+
+    # IMPORTANT: players.xp in your schema is *total lifetime XP*
+    xp = xp_progress(level, total_xp, xp_is_total=True)
+
     return render_template(
         "character.html",
-        error=error,
         editing=editing,
-        **ctx
+        error=error,
+        xp_in_level=xp["xp_in_level"],
+        xp_to_next=xp["xp_to_next"],
+        xp_pct=xp["pct"],
+        xp_text=xp["text"],
+        **ctx,
     )
+
 
 
 def load_character_context(uid, token):

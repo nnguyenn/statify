@@ -1,5 +1,3 @@
-# --- XP curve helpers (drop near the top of app.py or inside your routes file) ---
-
 def xp_needed_for_level(level: int) -> int:
     """
     XP required to go from level L -> L+1.
