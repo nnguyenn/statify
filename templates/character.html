@@ -248,13 +248,40 @@
       border:2px solid #2b2440;
       border-radius:12px;
       padding:10px 12px;
+      place-items:center;
       box-shadow:inset 0 0 0 1px rgba(57,224,255,.10);
+      aspect-ratio: 1/1;
+      min-height:110px;
+      position: relative;
+      padding:8px 10px 30px; 
     }
-    .equip-slot .name{ font-size:18px }
-    .equip-slot .meta{ font-size:12px; opacity:.9 }
+    .equip-slot .name{
+      font-size:16px;
+      margin-bottom:6px;
+    }
+    .equip-slot .meta{
+      position:absolute;               
+      left:10px;                       
+      bottom:8px;                      
+      font-size:12px;
+      opacity:.85;
+    }
 
-    @media (max-width:980px){
-      .equip-grid{ grid-template-columns:1fr }
+    /* add bottom spacing when the form is visible */
+    .form-grid{
+      margin-bottom: 18px;      /* NEW */
+    }
+
+    /* replace inline styles on the buttons with this class */
+    .form-actions{
+      display:flex;
+      gap:10px;
+      margin:6px 0 16px;        /* NEW: pushes “Level & Stats” down */
+    }
+
+    @media (max-width:1024px){
+      .equip-grid{ grid-template-columns:repeat(3, minmax(90px,1fr)); }
+      .equip-slot{ min-height:96px }
     }
 
     /* Responsive */
@@ -310,7 +337,7 @@
           <label>Bio</label>
           <textarea class="input textarea" name="bio" maxlength="240" placeholder="Add a short bio...">{{ player.bio or '' }}</textarea>
 
-          <div style="display:flex; gap:10px; margin-top:2px">
+          <div class="form-actions">
             <button class="btn" type="submit">Save</button>
             <button class="btn secondary" type="button" id="cancelBtn">Cancel</button>
           </div>
@@ -351,35 +378,7 @@
           </div>
         </div>
 
-        <h2 style="margin-top:16px">Equipment</h2>
-        <div class="equip-grid">
-          <div class="equip-slot">
-            <div class="name">{{ weapon.name if weapon else 'No Weapon' }}</div>
-            <div class="meta">{{ (weapon.rarity|upper ~ ' · +' ~ weapon.power) if weapon else 'WEAPON' }}</div>
-          </div>
-          <div class="equip-slot">
-            <div class="name">{{ armor.name if armor else 'No Armor' }}</div>
-            <div class="meta">{{ (armor.rarity|upper ~ ' · +' ~ armor.power) if armor else 'ARMOR' }}</div>
-          </div>
-          <div class="equip-slot">
-            <div class="name">{{ charm.name if charm else 'No Charm' }}</div>
-            <div class="meta">{{ (charm.rarity|upper ~ ' · +' ~ charm.power) if charm else 'CHARM' }}</div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- RIGHT: Sprite + Titles + Inventory + Wallet -->
-      <aside class="panel">
-        <div class="sprite-pane">
-          {% if player.sprite_url %}
-            <img class="player-sprite" src="{{ player.sprite_url }}" alt="Character sprite">
-          {% else %}
-            <div class="sprite-placeholder">PLAYER<br>SPRITE</div>
-          {% endif %}
-        </div>
-
-        <h2>Titles</h2>
+        <h2 style="margin-top:16px">Titles</h2>
         <div class="titles">
           {% if titles %}
             {% for t in titles %}
@@ -393,12 +392,44 @@
           {% endif %}
         </div>
 
+
+        <h3 style="margin-top:16px">Gold</h3>
+        <div class="muted"><b>{{ gold }}</b> g</div>
+
+      </section>
+
+      <!-- RIGHT: Sprite + Equipment + Inventory-->
+      <aside class="panel">
+        <aside class="sprite-pane">
+          {% if player.sprite_url %}
+            <img src="{{ player.sprite_url }}" alt="Character sprite">
+          {% else %}
+            <div class="sprite-placeholder">PLAYER<br>SPRITE</div>
+          {% endif %}
+        </aside>
+
+        <h2 style="margin-top:6px">Equipment</h2>
+        <div class="equip-grid">
+          <div class="equip-slot">
+            <div class="meta">{{ (weapon.rarity|upper ~ ' · +' ~ weapon.power) if weapon else 'WEAPON' }}</div>
+          </div>
+          <div class="equip-slot">
+            <div class="meta">{{ (armor.rarity|upper ~ ' · +' ~ armor.power) if armor else 'ARMOR' }}</div>
+          </div>
+          <div class="equip-slot">
+            <div class="meta">{{ (charm.rarity|upper ~ ' · +' ~ charm.power) if charm else 'CHARM' }}</div>
+          </div>
+        </div>
+
         <h2 style="margin-top:16px">Inventory</h2>
         <div class="inv">
           {% if inventory %}
             {% for r in inventory %}
               <div class="inv-row">
-                <span>{{ r.item.name if r.item else 'Item' }} <span class="muted">· {{ (r.item.slot|upper) if r.item else '' }} · {{ (r.item.rarity|upper) if r.item else '' }}</span></span>
+                <span>
+                  {{ r.item.name if r.item else 'Item' }}
+                  <span class="muted">· {{ (r.item.slot|upper) if r.item else '' }} · {{ (r.item.rarity|upper) if r.item else '' }}</span>
+                </span>
                 <b>x{{ r.qty }}</b>
               </div>
             {% endfor %}
@@ -406,10 +437,8 @@
             <div class="inv-row"><span class="muted">Inventory empty.</span><span></span></div>
           {% endif %}
         </div>
-
-        <h3 style="margin-top:16px">Gold</h3>
-        <div class="muted"><b>{{ gold }}</b> g</div>
       </aside>
+
     </main>
   </div>
 </div>
