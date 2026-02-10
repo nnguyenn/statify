@@ -226,7 +226,7 @@ def establish_session():
 
     if not access_token:
         abort(400, description="Missing access_token")
-
+    
     try:
         r = httpx.get(
             f"{SUPABASE_URL.rstrip('/')}/auth/v1/user",
