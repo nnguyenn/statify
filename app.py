@@ -527,3 +527,4 @@ def api_username_exists():
         return jsonify({"exists": True, "username": username}), 200
 
     return jsonify({"exists": False, "username": None}), 200
+
